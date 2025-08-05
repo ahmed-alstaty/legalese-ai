@@ -1,13 +1,13 @@
 import Stripe from 'stripe'
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set in environment variables')
-}
-
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-07-30.basil',
-  typescript: true,
-})
+// Initialize Stripe only if the secret key is available
+// This allows the app to build even without Stripe configured
+export const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-07-30.basil',
+      typescript: true,
+    })
+  : null as any
 
 // Subscription tier configurations
 export const SUBSCRIPTION_TIERS = {
