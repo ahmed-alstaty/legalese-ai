@@ -122,4 +122,4 @@ This project is proprietary and confidential.
 
 ## Support
 
-For support, email contact@legalese-ai.com
+For support, email contact@getlegalese.app

@@ -83,12 +83,8 @@ CREATE POLICY "Allow authenticated users to view waitlist" ON public.waitlist
 
 ## Step 3: Purchase and Configure Domain
 
-### 3.1 Domain options
-Recommended domain: `legalese-ai.com`
-Alternative options if unavailable:
-- `legaleseai.com`
-- `getlegalese.com`
-- `legalese.app`
+### 3.1 Domain purchased
+Domain: `getlegalese.app`
 
 ### 3.2 Purchase domain
 Popular registrars:
@@ -121,7 +117,7 @@ NEXT_PUBLIC_SUPABASE_URL=your_production_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_production_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_production_service_role_key
 OPENAI_API_KEY=your_openai_api_key
-NEXT_PUBLIC_APP_URL=https://legalese-ai.com
+NEXT_PUBLIC_APP_URL=https://getlegalese.app
 NODE_ENV=production
 
 # Stripe (for future use)
@@ -139,13 +135,13 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 
 ### 5.1 In Vercel
 1. Go to your project → Settings → Domains
-2. Add your domain (e.g., `legalese-ai.com`)
-3. Add www version too: `www.legalese-ai.com`
+2. Add your domain (e.g., `getlegalese.app`)
+3. Add www version too: `www.getlegalese.app`
 
 ### 5.2 Configure DNS
 Vercel will show you records to add. In your domain registrar:
 
-**For apex domain (legalese-ai.com):**
+**For apex domain (getlegalese.app):**
 - Type: A
 - Name: @
 - Value: 76.76.21.21
@@ -224,16 +220,11 @@ jobs:
 - [ ] CORS configured if needed
 
 ### 7.3 Update email addresses
-Update all hardcoded emails to use your domain:
-- Privacy policy: `privacy@legalese-ai.com`
-- Terms: `legal@legalese-ai.com`
-- Contact: `contact@legalese-ai.com`
+All emails now use: `contact@getlegalese.app`
 
 ### 7.4 Create email forwards
 In your domain registrar, set up email forwarding:
-- `contact@legalese-ai.com` → your personal email
-- `privacy@legalese-ai.com` → your personal email
-- `legal@legalese-ai.com` → your personal email
+- `contact@getlegalese.app` → your personal email
 
 ## Step 8: Post-Deployment
 
@@ -265,7 +256,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-prod-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...production-anon-key
 SUPABASE_SERVICE_ROLE_KEY=eyJ...production-service-role-key
 OPENAI_API_KEY=sk-...your-api-key
-NEXT_PUBLIC_APP_URL=https://legalese-ai.com
+NEXT_PUBLIC_APP_URL=https://getlegalese.app
 NODE_ENV=production
 ```
 

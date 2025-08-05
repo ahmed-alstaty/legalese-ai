@@ -211,7 +211,7 @@ export default function TermsOfService() {
               For questions about these Terms, please contact us at:
             </p>
             <ul className="list-none text-gray-600 mt-4">
-              <li>Email: contact@legalese-ai.com</li>
+              <li>Email: contact@getlegalese.app</li>
             </ul>
           </section>
         </div>

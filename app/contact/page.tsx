@@ -51,10 +51,10 @@ export default function ContactPage() {
               For general inquiries and support
             </p>
             <a
-              href="mailto:contact@legalese-ai.com"
+              href="mailto:contact@getlegalese.app"
               className="text-primary hover:underline"
             >
-              contact@legalese-ai.com
+              contact@getlegalese.app
             </a>
           </Card>
 
