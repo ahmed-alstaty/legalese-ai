@@ -18,25 +18,23 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential python3
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
       
-      - name: Install pnpm
-        run: npm install -g pnpm
-      
-      - name: Install dependencies with pnpm
+      - name: Install dependencies
         run: |
-          pnpm install --no-frozen-lockfile
-          # Ensure type definitions are installed
-          pnpm add -D @types/prosemirror-state
+          npm ci --legacy-peer-deps
       
       - name: Run TypeScript check
-        run: pnpm run typecheck
+        run: npm run typecheck
       
       - name: Run build
-        run: pnpm run build
+        run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://example.supabase.co' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-key-for-build' }}
