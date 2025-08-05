@@ -29,6 +29,8 @@ jobs:
       - name: Install dependencies with pnpm
         run: |
           pnpm install --no-frozen-lockfile
+          # Ensure type definitions are installed
+          pnpm add -D @types/prosemirror-state
       
       - name: Run TypeScript check
         run: pnpm run typecheck
