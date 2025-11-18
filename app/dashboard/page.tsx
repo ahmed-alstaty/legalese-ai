@@ -31,6 +31,7 @@ interface DashboardStats {
 export default function DashboardPage() {
   const searchParams = useSearchParams()
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [userEmail, setUserEmail] = useState<string>('')
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
@@ -52,6 +53,9 @@ export default function DashboardPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('User not authenticated')
+      
+      // Store user email
+      setUserEmail(user.email || '')
 
       // Fetch user profile
       let { data: profile } = await supabase
@@ -156,13 +160,45 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Welcome Message for New Users - Moved to Top */}
+      {stats && stats.total_documents === 0 && (
+        <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
+          <CardContent className="p-6">
+            <div className="text-center space-y-4">
+              <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
+                <FileText className="h-8 w-8 text-indigo-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-indigo-900">
+                  Welcome to Legalese!
+                </h3>
+                <p className="text-indigo-700 mt-1">
+                  Upload your first legal document to get started with AI-powered analysis.
+                  <br />
+                  <span className="font-semibold">Free trial: 3 documents lifetime limit</span>
+                </p>
+              </div>
+              <Button 
+                onClick={() => setActiveTab('upload')}
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                Upload Your First Document
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Welcome Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-gray-900">
           {getGreeting()}{userProfile?.full_name ? `, ${userProfile.full_name.split(' ')[0]}` : ''}!
         </h1>
         <p className="text-gray-600">
-          Welcome to your legal document analysis dashboard. Upload documents to get started.
+          {stats && userProfile?.subscription_tier === 'free' 
+            ? `Free trial: You can analyze up to 3 documents total. ${3 - (stats.total_documents || 0)} remaining.`
+            : 'Welcome to your legal document analysis dashboard. Upload documents to get started.'
+          }
         </p>
       </div>
 
@@ -203,9 +239,9 @@ export default function DashboardPage() {
             <CardContent className="p-6">
               <div className="flex items-center space-x-2">
                 <BarChart3 className="h-4 w-4 text-purple-600" />
-                <p className="text-sm font-medium text-gray-600">This Month</p>
+                <p className="text-sm font-medium text-gray-600">Total Used</p>
               </div>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.analyses_this_month}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.total_documents}</p>
             </CardContent>
           </Card>
         </div>
@@ -256,7 +292,20 @@ export default function DashboardPage() {
                   <Button 
                     className="w-full justify-start" 
                     variant="outline"
-                    onClick={() => window.open('/dashboard/help', '_blank')}
+                    onClick={() => {
+                      const subject = encodeURIComponent('Help Request - Legalese App')
+                      const body = encodeURIComponent(
+                        `Hello Legalese Support Team,\n\n` +
+                        `I need help with:\n\n` +
+                        `[Please describe your issue or question here]\n\n` +
+                        `User Details:\n` +
+                        `- Name: ${userProfile?.full_name || 'Not provided'}\n` +
+                        `- Email: ${userEmail || 'Not provided'}\n` +
+                        `- Subscription: ${userProfile?.subscription_tier || 'free'}\n\n` +
+                        `Best regards`
+                      )
+                      window.location.href = `mailto:contact@getlegalese.app?subject=${subject}&body=${body}`
+                    }}
                   >
                     <AlertCircle className="h-4 w-4 mr-2" />
                     Need Help?
@@ -277,33 +326,6 @@ export default function DashboardPage() {
           </div>
         </TabsContent>
       </Tabs>
-
-      {/* Welcome Message for New Users */}
-      {stats && stats.total_documents === 0 && (
-        <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
-          <CardContent className="p-6">
-            <div className="text-center space-y-4">
-              <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
-                <FileText className="h-8 w-8 text-indigo-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-indigo-900">
-                  Welcome to Legalese!
-                </h3>
-                <p className="text-indigo-700 mt-1">
-                  Upload your first legal document to get started with AI-powered analysis.
-                </p>
-              </div>
-              <Button 
-                onClick={() => setActiveTab('upload')}
-                className="bg-indigo-600 hover:bg-indigo-700"
-              >
-                Upload Your First Document
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }

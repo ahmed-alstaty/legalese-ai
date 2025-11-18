@@ -9,7 +9,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { 
   FileText, 
   Upload, 
-  Settings, 
   LogOut, 
   Menu, 
   X,
@@ -98,10 +97,10 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       
       {/* Sidebar */}
       <div className={`
-        fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out
-        ${isCollapsed ? '-translate-x-full' : 'translate-x-0'}
-        lg:translate-x-0 lg:static lg:z-auto
-        ${isCollapsed ? 'lg:w-16' : 'w-64 lg:w-64'}
+        h-screen bg-white border-r border-gray-200 transition-all duration-300 ease-in-out flex-shrink-0
+        ${isCollapsed ? 'w-16' : 'w-64'}
+        ${!isCollapsed ? 'fixed lg:relative' : 'relative'}
+        ${!isCollapsed ? 'z-50 lg:z-auto' : ''}
       `}>
         <div className="flex flex-col h-full">
           {/* Header */}
@@ -178,18 +177,10 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               {!isCollapsed && <span className="ml-2">Upload</span>}
             </Button>
             
-            <Button
-              variant="ghost"
-              className={`w-full justify-start ${isCollapsed ? 'px-2' : ''}`}
-              onClick={() => router.push('/dashboard/settings')}
-            >
-              <Settings className="h-4 w-4" />
-              {!isCollapsed && <span className="ml-2">Settings</span>}
-            </Button>
           </nav>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-gray-200">
+          {/* Footer - positioned at bottom */}
+          <div className="mt-auto p-4 border-t border-gray-200">
             <Button
               variant="ghost"
               className={`w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 ${isCollapsed ? 'px-2' : ''}`}

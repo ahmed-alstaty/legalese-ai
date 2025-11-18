@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     // Get user profile to check limits
     const { data: userProfile, error: profileError } = await supabase
       .from('user_profiles')
-      .select('subscription_tier, subscription_status, analyses_used_this_month')
+      .select('subscription_tier, subscription_status, lifetime_documents_created')
       .eq('id', user.id)
       .single();
 
@@ -32,14 +32,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user has active subscription for file uploads
-    if (userProfile.subscription_status !== 'active' && userProfile.subscription_tier === 'free') {
-      const freeLimit = 2; // Free users get 2 uploads per month
-      if (userProfile.analyses_used_this_month >= freeLimit) {
+    // Check if user has reached lifetime limit for free tier
+    if (userProfile.subscription_tier === 'free') {
+      const lifetimeLimit = 3; // Free users get 3 documents lifetime
+      const lifetimeUsed = userProfile.lifetime_documents_created || 0;
+      
+      if (lifetimeUsed >= lifetimeLimit) {
         return NextResponse.json(
           { 
             error: 'Upload limit exceeded',
-            message: 'Free users are limited to 2 document uploads per month. Please upgrade your subscription.'
+            message: 'Free trial limit reached. You have used all 3 free documents. Please upgrade to continue.'
           },
           { status: 403 }
         );

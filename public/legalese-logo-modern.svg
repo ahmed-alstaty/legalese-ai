@@ -1,0 +1,66 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Gradient Definition -->
+  <defs>
+    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E40AF;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="purpleAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6366F1;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="400" rx="80" fill="url(#blueGradient)"/>
+  
+  <!-- Main Icon Container -->
+  <g transform="translate(200, 170)">
+    <!-- Document Base -->
+    <path d="M -70 -60 L -70 80 Q -70 90 -60 90 L 60 90 Q 70 90 70 80 L 70 -40 L 50 -60 Z" 
+          fill="white" opacity="0.95"/>
+    
+    <!-- Folded Corner -->
+    <path d="M 50 -60 L 50 -40 L 70 -40 Z" fill="#E0E7FF"/>
+    
+    <!-- AI Brain Network Symbol -->
+    <g transform="translate(0, 0)">
+      <!-- Central Node -->
+      <circle cx="0" cy="-10" r="8" fill="url(#purpleAccent)"/>
+      
+      <!-- Surrounding Nodes -->
+      <circle cx="-30" cy="-25" r="5" fill="#8B5CF6" opacity="0.7"/>
+      <circle cx="30" cy="-25" r="5" fill="#8B5CF6" opacity="0.7"/>
+      <circle cx="-35" cy="10" r="5" fill="#8B5CF6" opacity="0.7"/>
+      <circle cx="35" cy="10" r="5" fill="#8B5CF6" opacity="0.7"/>
+      <circle cx="0" cy="30" r="5" fill="#8B5CF6" opacity="0.7"/>
+      
+      <!-- Neural Connections -->
+      <line x1="0" y1="-10" x2="-30" y2="-25" stroke="#8B5CF6" stroke-width="2" opacity="0.4"/>
+      <line x1="0" y1="-10" x2="30" y2="-25" stroke="#8B5CF6" stroke-width="2" opacity="0.4"/>
+      <line x1="0" y1="-10" x2="-35" y2="10" stroke="#8B5CF6" stroke-width="2" opacity="0.4"/>
+      <line x1="0" y1="-10" x2="35" y2="10" stroke="#8B5CF6" stroke-width="2" opacity="0.4"/>
+      <line x1="0" y1="-10" x2="0" y2="30" stroke="#8B5CF6" stroke-width="2" opacity="0.4"/>
+      
+      <!-- Connecting outer nodes -->
+      <line x1="-35" y1="10" x2="0" y2="30" stroke="#8B5CF6" stroke-width="1.5" opacity="0.3"/>
+      <line x1="35" y1="10" x2="0" y2="30" stroke="#8B5CF6" stroke-width="1.5" opacity="0.3"/>
+    </g>
+    
+    <!-- Simplified Text Lines -->
+    <rect x="-45" y="50" width="90" height="4" rx="2" fill="#CBD5E1"/>
+    <rect x="-45" y="62" width="70" height="4" rx="2" fill="#CBD5E1"/>
+    <rect x="-45" y="74" width="80" height="4" rx="2" fill="#CBD5E1"/>
+  </g>
+  
+  <!-- Company Text -->
+  <text x="200" y="310" font-family="Helvetica, Arial, sans-serif" font-size="48" font-weight="700" text-anchor="middle" fill="white">
+    Legalese
+  </text>
+  
+  <!-- AI Badge -->
+  <rect x="165" y="330" width="70" height="28" rx="14" fill="white" opacity="0.2"/>
+  <text x="200" y="349" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="600" text-anchor="middle" fill="white">
+    AI
+  </text>
+</svg>

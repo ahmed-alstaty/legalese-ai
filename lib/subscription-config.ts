@@ -3,11 +3,11 @@
 
 export const SUBSCRIPTION_TIERS = {
   free: {
-    name: 'Free',
+    name: 'Free Trial',
     price: 0,
-    monthlyAnalyses: 5,
+    lifetimeAnalyses: 3,
     features: [
-      'Up to 5 document analyses per month',
+      'Up to 3 documents total (lifetime limit)',
       'Basic AI analysis',
       'Standard processing time',
       'Email support'
@@ -16,9 +16,9 @@ export const SUBSCRIPTION_TIERS = {
   basic: {
     name: 'Basic',
     price: 19,
-    monthlyAnalyses: 25,
+    lifetimeAnalyses: 999999, // Unlimited for paid tiers
     features: [
-      'Up to 25 document analyses per month',
+      'Unlimited document analyses',
       'Advanced AI analysis',
       'Priority processing',
       'Email & chat support',
@@ -28,9 +28,9 @@ export const SUBSCRIPTION_TIERS = {
   pro: {
     name: 'Pro',
     price: 49,
-    monthlyAnalyses: 100,
+    lifetimeAnalyses: 999999, // Unlimited for paid tiers
     features: [
-      'Up to 100 document analyses per month',
+      'Unlimited document analyses',
       'Premium AI analysis with GPT-4',
       'Instant processing',
       'Priority support',
@@ -42,9 +42,9 @@ export const SUBSCRIPTION_TIERS = {
   enterprise: {
     name: 'Enterprise',
     price: 199,
-    monthlyAnalyses: 1000,
+    lifetimeAnalyses: 999999, // Unlimited for paid tiers
     features: [
-      'Up to 1000 document analyses per month',
+      'Unlimited document analyses',
       'Premium AI analysis with GPT-4',
       'Instant processing',
       'Dedicated support',
@@ -61,7 +61,7 @@ export type SubscriptionTier = keyof typeof SUBSCRIPTION_TIERS
 // Helper functions
 export function getTierLimit(tier: string): number {
   const tierConfig = SUBSCRIPTION_TIERS[tier as SubscriptionTier]
-  return tierConfig?.monthlyAnalyses || SUBSCRIPTION_TIERS.free.monthlyAnalyses
+  return tierConfig?.lifetimeAnalyses || SUBSCRIPTION_TIERS.free.lifetimeAnalyses
 }
 
 export function getTierPrice(tier: string): number {
@@ -71,32 +71,24 @@ export function getTierPrice(tier: string): number {
 
 export function getTierName(tier: string): string {
   const tierConfig = SUBSCRIPTION_TIERS[tier as SubscriptionTier]
-  return tierConfig?.name || 'Free'
+  return tierConfig?.name || 'Free Trial'
 }
 
 export function getUsagePercentage(used: number, tier: string): number {
   const limit = getTierLimit(tier)
+  // For paid tiers with unlimited, show 0%
+  if (limit > 1000) return 0
   return Math.min((used / limit) * 100, 100)
 }
 
 export function getRemainingAnalyses(used: number, tier: string): number {
   const limit = getTierLimit(tier)
+  // For paid tiers with unlimited
+  if (limit > 1000) return 999999
   return Math.max(limit - used, 0)
 }
 
-export function getDaysRemainingInMonth(): number {
-  const now = new Date()
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-  return Math.ceil((nextMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-}
-
-export function shouldResetMonthlyUsage(lastResetDate: Date | string): boolean {
-  const last = new Date(lastResetDate)
-  const now = new Date()
-  
-  // Reset if we're in a different month
-  return (
-    last.getMonth() !== now.getMonth() ||
-    last.getFullYear() !== now.getFullYear()
-  )
+export function isUnlimited(tier: string): boolean {
+  const limit = getTierLimit(tier)
+  return limit > 1000
 }

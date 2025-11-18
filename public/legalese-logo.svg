@@ -1,0 +1,38 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="200" cy="200" r="190" fill="#1E40AF"/>
+  
+  <!-- Document/Scale Hybrid Icon -->
+  <g transform="translate(200, 200)">
+    <!-- Legal Document Pages -->
+    <rect x="-60" y="-80" width="120" height="140" rx="4" fill="white" opacity="0.95"/>
+    <rect x="-50" y="-70" width="100" height="120" rx="3" fill="white"/>
+    
+    <!-- AI Circuit Lines on Document -->
+    <circle cx="-30" cy="-40" r="3" fill="#1E40AF"/>
+    <circle cx="30" cy="-40" r="3" fill="#1E40AF"/>
+    <circle cx="-30" cy="0" r="3" fill="#1E40AF"/>
+    <circle cx="30" cy="0" r="3" fill="#1E40AF"/>
+    <circle cx="0" cy="-20" r="3" fill="#1E40AF"/>
+    
+    <!-- Connecting Lines -->
+    <path d="M -30 -40 L 0 -20 L 30 -40" stroke="#1E40AF" stroke-width="2" fill="none"/>
+    <path d="M -30 0 L 0 -20 L 30 0" stroke="#1E40AF" stroke-width="2" fill="none"/>
+    <path d="M 0 -20 L 0 20" stroke="#1E40AF" stroke-width="2"/>
+    
+    <!-- Text Lines (representing simplified text) -->
+    <rect x="-35" y="25" width="70" height="3" rx="1.5" fill="#94A3B8"/>
+    <rect x="-35" y="35" width="50" height="3" rx="1.5" fill="#94A3B8"/>
+    <rect x="-35" y="45" width="60" height="3" rx="1.5" fill="#94A3B8"/>
+  </g>
+  
+  <!-- Company Name -->
+  <text x="200" y="320" font-family="Arial, sans-serif" font-size="42" font-weight="bold" text-anchor="middle" fill="white">
+    LEGALESE
+  </text>
+  
+  <!-- Tagline -->
+  <text x="200" y="350" font-family="Arial, sans-serif" font-size="18" text-anchor="middle" fill="#93C5FD">
+    AI
+  </text>
+</svg>

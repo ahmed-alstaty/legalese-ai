@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -9,13 +9,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import { 
   Upload, 
-  FileText, 
   X, 
   CheckCircle, 
   AlertCircle,
   Loader2,
-  Sparkles,
-  ArrowRight
+  Sparkles
 } from 'lucide-react'
 
 interface UploadedFile {
@@ -31,8 +29,44 @@ export function DocumentUpload() {
   const [files, setFiles] = useState<UploadedFile[]>([])
   const [isDragOver, setIsDragOver] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [documentCount, setDocumentCount] = useState(0)
+  const [userTier, setUserTier] = useState('free')
+  const [limitReached, setLimitReached] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    checkDocumentLimit()
+  }, [])
+
+  const checkDocumentLimit = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Get user profile with lifetime documents
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('subscription_tier, lifetime_documents_created')
+        .eq('id', user.id)
+        .single()
+
+      if (profile) {
+        setUserTier(profile.subscription_tier)
+        
+        // Use lifetime_documents_created for accurate tracking
+        const docCount = profile.lifetime_documents_created || 0
+        setDocumentCount(docCount)
+        
+        // Check if limit reached for free tier
+        if (profile.subscription_tier === 'free' && docCount >= 3) {
+          setLimitReached(true)
+        }
+      }
+    } catch (error) {
+      console.error('Error checking document limit:', error)
+    }
+  }
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -60,12 +94,22 @@ export function DocumentUpload() {
   }, [])
 
   const handleFiles = async (fileList: File[]) => {
+    // Check document limit for free tier
+    if (userTier === 'free' && limitReached) {
+      alert('You have reached the free trial limit of 3 documents. Please upgrade to continue.')
+      return
+    }
+
+    if (userTier === 'free' && documentCount + fileList.length > 3) {
+      alert(`You can only upload ${3 - documentCount} more document(s) in the free trial.`)
+      return
+    }
+
     const validFiles = fileList.filter(file => {
       const validTypes = [
         'application/pdf',
         'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/plain'
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       ]
       const maxSize = 10 * 1024 * 1024 // 10MB
       
@@ -74,7 +118,7 @@ export function DocumentUpload() {
 
     if (validFiles.length !== fileList.length) {
       // Show error for invalid files
-      console.warn('Some files were rejected. Only PDF, DOC, DOCX, and TXT files under 10MB are allowed.')
+      alert('Some files were rejected. Only PDF, DOC, and DOCX files under 10MB are allowed.')
     }
 
     const newFiles: UploadedFile[] = validFiles.map(file => ({
@@ -222,18 +266,6 @@ export function DocumentUpload() {
     }
   }
 
-  const getStatusIcon = (status: UploadedFile['status']) => {
-    switch (status) {
-      case 'uploading':
-      case 'processing':
-      case 'analyzing':
-        return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />
-      case 'error':
-        return <AlertCircle className="h-4 w-4 text-red-500" />
-    }
-  }
 
   const getStatusText = (status: UploadedFile['status']) => {
     switch (status) {
@@ -252,15 +284,145 @@ export function DocumentUpload() {
 
   return (
     <div className="space-y-6">
+      {/* File Upload Progress - Show at the top when files are being processed */}
+      {files.length > 0 && (
+        <Card className="border-indigo-200 bg-indigo-50/30">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                {files.some(f => f.status === 'uploading' || f.status === 'processing' || f.status === 'analyzing') ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+                    Processing Documents
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-5 w-5 text-indigo-600" />
+                    Documents Ready
+                  </>
+                )}
+              </CardTitle>
+              <span className="text-sm text-gray-600">
+                {files.filter(f => f.status === 'completed').length} of {files.length} ready
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {files.map((file) => (
+              <div key={file.id} className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 mt-1">
+                    {file.status === 'completed' ? (
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      </div>
+                    ) : file.status === 'error' ? (
+                      <div className="p-2 bg-red-100 rounded-lg">
+                        <AlertCircle className="h-5 w-5 text-red-600" />
+                      </div>
+                    ) : (
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {file.file.name}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {(file.file.size / 1024 / 1024).toFixed(2)} MB • {getDocumentType(file.file.type).toUpperCase()}
+                        </p>
+                      </div>
+                      {file.status === 'completed' && (
+                        <Button
+                          size="sm"
+                          onClick={() => analyzeDocument(file)}
+                          className="bg-indigo-600 hover:bg-indigo-700 shadow-sm"
+                        >
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          Analyze Now
+                        </Button>
+                      )}
+                      {file.status === 'error' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile(file.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {/* Status or Progress */}
+                    {file.status === 'uploading' || file.status === 'processing' ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-600">{getStatusText(file.status)}</span>
+                          <span className="text-gray-600 font-medium">{file.progress}%</span>
+                        </div>
+                        <Progress value={file.progress} className="h-1.5" />
+                      </div>
+                    ) : file.status === 'analyzing' ? (
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-indigo-100 rounded-full px-3 py-1">
+                          <p className="text-xs font-medium text-indigo-700 animate-pulse">
+                            AI is analyzing your document...
+                          </p>
+                        </div>
+                      </div>
+                    ) : file.status === 'completed' ? (
+                      <div className="flex items-center gap-2">
+                        <div className="bg-green-100 rounded-full px-3 py-1">
+                          <p className="text-xs font-medium text-green-700">
+                            ✓ Ready for analysis
+                          </p>
+                        </div>
+                      </div>
+                    ) : file.status === 'error' && file.error ? (
+                      <Alert className="mt-2 py-2">
+                        <AlertDescription className="text-xs">{file.error}</AlertDescription>
+                      </Alert>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Upload Area */}
       <Card>
         <CardHeader>
           <CardTitle>Upload Documents</CardTitle>
           <CardDescription>
-            Upload PDF, DOC, DOCX, or TXT files for AI analysis. Maximum file size: 10MB.
+            {userTier === 'free' 
+              ? `Free trial: ${3 - documentCount} of 3 documents remaining (lifetime limit)`
+              : 'Upload PDF, DOC, or DOCX files for AI analysis. Maximum file size: 10MB.'
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {limitReached && userTier === 'free' && (
+            <Alert className="mb-4 border-red-200 bg-red-50">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">
+                <strong>Free trial limit reached!</strong> You've used all 3 free documents. 
+                Upgrade to continue analyzing documents.
+                <Button 
+                  size="sm" 
+                  className="ml-2 bg-red-600 hover:bg-red-700"
+                  onClick={() => router.push('/pricing')}
+                >
+                  Upgrade Now
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
           <div
             className={`
               border-2 border-dashed rounded-lg p-8 text-center transition-colors
@@ -281,110 +443,26 @@ export function DocumentUpload() {
             <p className="text-sm text-gray-500 mb-4">
               or click to browse your files
             </p>
-            <input
-              type="file"
-              multiple
-              accept=".pdf,.doc,.docx,.txt"
-              onChange={handleFileSelect}
-              className="hidden"
-              id="file-upload"
-              disabled={isUploading}
-            />
-            <Button asChild disabled={isUploading}>
-              <label htmlFor="file-upload" className="cursor-pointer">
-                Choose Files
-              </label>
-            </Button>
+            <div className="relative">
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx"
+                onChange={handleFileSelect}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                id="file-upload"
+                disabled={isUploading || (userTier === 'free' && limitReached)}
+              />
+              <Button 
+                disabled={isUploading || (userTier === 'free' && limitReached)}
+                className="relative z-0"
+              >
+                {userTier === 'free' && limitReached ? 'Limit Reached' : 'Choose Files'}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* File List */}
-      {files.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Upload Progress</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {files.map((file) => (
-              <div key={file.id} className="flex items-center space-x-4 p-4 border rounded-lg">
-                <FileText className="h-8 w-8 text-gray-400 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {file.file.name}
-                    </p>
-                    <div className="flex items-center space-x-2">
-                      {getStatusIcon(file.status)}
-                      <span className="text-xs text-gray-500">
-                        {getStatusText(file.status)}
-                      </span>
-                      {file.status === 'completed' && (
-                        <Button
-                          size="sm"
-                          variant="default"
-                          onClick={() => analyzeDocument(file)}
-                          className="bg-indigo-600 hover:bg-indigo-700"
-                        >
-                          Analyze Now
-                        </Button>
-                      )}
-                      {file.status !== 'uploading' && file.status !== 'processing' && file.status !== 'analyzing' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile(file.id)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2 text-xs text-gray-500">
-                    <span>{(file.file.size / 1024 / 1024).toFixed(2)} MB</span>
-                    <span>•</span>
-                    <span>{file.file.type}</span>
-                  </div>
-                  {(file.status === 'uploading' || file.status === 'processing') && (
-                    <Progress value={file.progress} className="mt-2" />
-                  )}
-                  {file.status === 'error' && file.error && (
-                    <Alert className="mt-2">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{file.error}</AlertDescription>
-                    </Alert>
-                  )}
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Success Card for Completed Uploads */}
-      {files.some(f => f.status === 'completed') && (
-        <Alert className="bg-green-50 border-green-200">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">
-                Upload successful! Your documents are ready for AI analysis.
-              </span>
-              <Button 
-                variant="link"
-                onClick={() => router.push('/dashboard')}
-                className="text-green-700 hover:text-green-800"
-              >
-                View All Documents
-                <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-            <p className="text-sm mt-2 text-green-700">
-              Click "Analyze Now" on any document above to start the AI analysis immediately.
-            </p>
-          </AlertDescription>
-        </Alert>
-      )}
     </div>
   )
 }

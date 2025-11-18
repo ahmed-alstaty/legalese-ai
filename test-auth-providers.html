@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Auth Providers</title>
+</head>
+<body>
+    <h1>Testing Supabase Auth Providers</h1>
+    <button onclick="testProviders()">Check Available Providers</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testProviders() {
+            const result = document.getElementById('result');
+            
+            try {
+                // Check auth settings
+                const response = await fetch('https://eepojaeewjroymplxgaq.supabase.co/auth/v1/settings');
+                const data = await response.json();
+                
+                result.textContent = JSON.stringify(data, null, 2);
+                
+                console.log('Available providers:', data.external);
+                
+                // Also test individual providers
+                const providers = ['google', 'linkedin', 'linkedin_oidc'];
+                for (const provider of providers) {
+                    try {
+                        const testUrl = `https://eepojaeewjroymplxgaq.supabase.co/auth/v1/authorize?provider=${provider}`;
+                        const testResponse = await fetch(testUrl, { method: 'HEAD' });
+                        console.log(`${provider}: ${testResponse.status}`);
+                    } catch (e) {
+                        console.log(`${provider}: Error - ${e.message}`);
+                    }
+                }
+            } catch (error) {
+                result.textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

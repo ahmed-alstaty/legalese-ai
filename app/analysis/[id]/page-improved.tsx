@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,6 @@ import { useAnalysis } from '@/hooks/use-analysis'
 import { useChat } from '@/hooks/use-chat'
 import { cn } from '@/lib/utils'
 import { MessageV2 } from '@/components/chat/message-v2'
-import { DocumentViewer } from '@/components/analysis/document-viewer'
 import { 
   ArrowLeft, 
   FileText, 
@@ -26,6 +25,7 @@ import {
   MessageSquare,
   Send,
   AlertCircle,
+  Info,
   Lightbulb,
   Shield,
   DollarSign,
@@ -35,6 +35,7 @@ import {
   Download,
   ChevronRight,
   CheckCircle,
+  XCircle,
   Sparkles
 } from 'lucide-react'
 
@@ -97,9 +98,8 @@ export default function AnalysisPage({ params }: PageProps) {
   const [analysisId, setAnalysisId] = useState<string | null>(null)
   const [selectedHighlight, setSelectedHighlight] = useState<number | null>(null)
   const [chatMessage, setChatMessage] = useState('')
+  const editorRef = useRef<HTMLDivElement>(null)
   const chatInputRef = useRef<HTMLTextAreaElement>(null)
-  const chatScrollRef = useRef<HTMLDivElement>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
   // Get the analysis ID from params
@@ -112,7 +112,8 @@ export default function AnalysisPage({ params }: PageProps) {
   const {
     data: analysis,
     loading,
-    error
+    error,
+    refetch,
   } = useAnalysis(analysisId, {
     includeContent: true,
     includeAnnotations: true,
@@ -132,19 +133,6 @@ export default function AnalysisPage({ params }: PageProps) {
       loadMessages()
     }
   }, [analysisId, loadMessages])
-
-  // Auto-scroll to bottom when messages change or when AI is responding
-  const scrollToBottom = useCallback(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' })
-    }
-  }, [])
-
-  useEffect(() => {
-    // Scroll when new messages arrive or when loading state changes
-    const timeoutId = setTimeout(scrollToBottom, 100)
-    return () => clearTimeout(timeoutId)
-  }, [messages, chatLoading, scrollToBottom])
 
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -181,9 +169,7 @@ export default function AnalysisPage({ params }: PageProps) {
     )
   }
 
-  // Get highlighted sections from the analysis data
-  // Try multiple possible field names
-  const highlightedSections = analysis.highlightedSections || analysis.aiComments || []
+  const highlightedSections = analysis.aiAnnotations || []
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -219,23 +205,21 @@ export default function AnalysisPage({ params }: PageProps) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {analysis.status && (
-              <Badge 
-                variant="outline" 
-                className={cn(
-                  analysis.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : 
-                  analysis.status === 'processing' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                  'bg-gray-50 text-gray-700 border-gray-200'
-                )}
-              >
-                <span className="flex items-center gap-1">
-                  {analysis.status === 'completed' ? <CheckCircle className="h-3 w-3" /> :
-                   analysis.status === 'processing' ? <RefreshCw className="h-3 w-3 animate-spin" /> :
-                   <Clock className="h-3 w-3" />}
-                  {analysis.status.charAt(0).toUpperCase() + analysis.status.slice(1)}
-                </span>
-              </Badge>
-            )}
+            <Badge 
+              variant="outline" 
+              className={cn(
+                analysis.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : 
+                analysis.status === 'processing' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                'bg-gray-50 text-gray-700 border-gray-200'
+              )}
+            >
+              <span className="flex items-center gap-1">
+                {analysis.status === 'completed' ? <CheckCircle className="h-3 w-3" /> :
+                 analysis.status === 'processing' ? <RefreshCw className="h-3 w-3 animate-spin" /> :
+                 <Clock className="h-3 w-3" />}
+                {analysis.status.charAt(0).toUpperCase() + analysis.status.slice(1)}
+              </span>
+            </Badge>
             <Button size="sm" variant="outline" className="gap-2">
               <Download className="h-4 w-4" />
               Export PDF
@@ -262,7 +246,7 @@ export default function AnalysisPage({ params }: PageProps) {
           </div>
 
           {/* Messages Area */}
-          <ScrollArea className="flex-1" ref={chatScrollRef}>
+          <ScrollArea className="flex-1">
             <div className="p-4">
               {messages.length === 0 ? (
                 <div className="text-center py-8">
@@ -295,26 +279,8 @@ export default function AnalysisPage({ params }: PageProps) {
               ) : (
                 <div className="space-y-4">
                   {messages.map((message) => (
-                    <MessageV2 
-                      key={message.id} 
-                      message={{
-                        ...message,
-                        isStreaming: chatLoading && message === messages[messages.length - 1] && message.role === 'assistant'
-                      }} 
-                    />
+                    <MessageV2 key={message.id} message={message} />
                   ))}
-                  {chatLoading && messages[messages.length - 1]?.role === 'user' && (
-                    <MessageV2 
-                      message={{
-                        id: 'temp-loading',
-                        role: 'assistant',
-                        content: '',
-                        timestamp: new Date(),
-                        isStreaming: true
-                      }} 
-                    />
-                  )}
-                  <div ref={messagesEndRef} />
                 </div>
               )}
             </div>
@@ -394,27 +360,13 @@ export default function AnalysisPage({ params }: PageProps) {
             <p className="text-xs text-gray-500 mt-1">
               {highlightedSections.length} issues identified
             </p>
-            {/* Debug: Show if we have data */}
-            {highlightedSections.length === 0 && analysis.aiComments && (
-              <p className="text-xs text-orange-500 mt-1">
-                (Found {analysis.aiComments.length} AI comments instead)
-              </p>
-            )}
           </div>
           
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-3">
-              {highlightedSections.map((section: any, index: number) => {
-                // Handle different data structures
-                const severity = section.severity || section.riskLevel || 'medium'
-                const riskLevel = section.riskLevel || section.risk_level || 5
-                const type = section.type || section.category || 'general'
-                const text = section.text || section.highlighted_text || ''
-                const comment = section.comment || section.issue || section.analysis || ''
-                const suggestion = section.suggestion || section.recommendation || ''
-                
-                const riskStyles = getRiskStyles(severity)
-                const RiskIcon = getRiskIcon(type)
+              {highlightedSections.map((section, index) => {
+                const riskStyles = getRiskStyles(section.severity)
+                const RiskIcon = getRiskIcon(section.type)
                 
                 return (
                   <Card
@@ -433,11 +385,11 @@ export default function AnalysisPage({ params }: PageProps) {
                             <RiskIcon className={cn("h-4 w-4", riskStyles.icon)} />
                           </div>
                           <span className={cn("font-medium text-sm capitalize", riskStyles.text)}>
-                            {type.replace('_', ' ')}
+                            {section.type.replace('_', ' ')}
                           </span>
                         </div>
                         <Badge variant="outline" className={riskStyles.badge}>
-                          Risk: {riskLevel}/10
+                          Risk: {section.riskLevel}/10
                         </Badge>
                       </div>
 
@@ -445,7 +397,7 @@ export default function AnalysisPage({ params }: PageProps) {
                         {/* Highlighted Text */}
                         <div className="p-2 bg-white rounded-lg border border-gray-200">
                           <p className="text-xs text-gray-600 italic line-clamp-2">
-                            "{text}"
+                            "{section.text}"
                           </p>
                         </div>
 
@@ -456,19 +408,19 @@ export default function AnalysisPage({ params }: PageProps) {
                             <span className="text-xs font-medium">Issue</span>
                           </div>
                           <p className="text-xs text-gray-600 pl-4">
-                            {comment}
+                            {section.comment}
                           </p>
                         </div>
 
                         {/* Suggestion */}
-                        {suggestion && (
+                        {section.suggestion && (
                           <div className="space-y-1">
                             <div className="flex items-center gap-1.5">
                               <Lightbulb className="h-3 w-3 text-blue-500" />
                               <span className="text-xs font-medium">Recommendation</span>
                             </div>
                             <p className="text-xs text-gray-600 pl-4">
-                              {suggestion}
+                              {section.suggestion}
                             </p>
                           </div>
                         )}
@@ -489,4 +441,176 @@ export default function AnalysisPage({ params }: PageProps) {
       </div>
     </div>
   )
+}
+
+// Enhanced Document Viewer Component
+function DocumentViewer({ 
+  content, 
+  highlights, 
+  selectedHighlight, 
+  onHighlightClick 
+}: {
+  content: string
+  highlights: any[]
+  selectedHighlight: number | null
+  onHighlightClick: (index: number) => void
+}) {
+  // Process and render content with proper formatting
+  const renderContent = () => {
+    const lines = content.split('\n')
+    const elements: JSX.Element[] = []
+    let inList = false
+    let listItems: string[] = []
+
+    lines.forEach((line, lineIndex) => {
+      const trimmedLine = line.trim()
+
+      // Skip empty lines
+      if (!trimmedLine) {
+        if (inList && listItems.length > 0) {
+          elements.push(
+            <ul key={`list-${lineIndex}`} className="list-disc pl-6 mb-4 space-y-1">
+              {listItems.map((item, i) => (
+                <li key={i} className="text-gray-700">{item}</li>
+              ))}
+            </ul>
+          )
+          listItems = []
+          inList = false
+        }
+        elements.push(<div key={`space-${lineIndex}`} className="h-4" />)
+        return
+      }
+
+      // Headers - ALL CAPS or numbered sections
+      if (trimmedLine.match(/^[A-Z\s]+$/) && trimmedLine.length > 3) {
+        if (inList && listItems.length > 0) {
+          elements.push(
+            <ul key={`list-${lineIndex}`} className="list-disc pl-6 mb-4 space-y-1">
+              {listItems.map((item, i) => (
+                <li key={i} className="text-gray-700">{item}</li>
+              ))}
+            </ul>
+          )
+          listItems = []
+          inList = false
+        }
+        elements.push(
+          <h2 key={`h2-${lineIndex}`} className="text-xl font-bold mt-6 mb-3 text-gray-900">
+            {applyHighlights(trimmedLine, lineIndex, highlights, selectedHighlight, onHighlightClick)}
+          </h2>
+        )
+      }
+      // Section numbers
+      else if (trimmedLine.match(/^\d+\./)) {
+        if (inList && listItems.length > 0) {
+          elements.push(
+            <ul key={`list-${lineIndex}`} className="list-disc pl-6 mb-4 space-y-1">
+              {listItems.map((item, i) => (
+                <li key={i} className="text-gray-700">{item}</li>
+              ))}
+            </ul>
+          )
+          listItems = []
+          inList = false
+        }
+        elements.push(
+          <h3 key={`h3-${lineIndex}`} className="text-lg font-semibold mt-4 mb-2 text-gray-800">
+            {applyHighlights(trimmedLine, lineIndex, highlights, selectedHighlight, onHighlightClick)}
+          </h3>
+        )
+      }
+      // Bullet points
+      else if (trimmedLine.match(/^[\-\*\•]/)) {
+        inList = true
+        listItems.push(trimmedLine.substring(1).trim())
+      }
+      // Regular paragraphs
+      else {
+        if (inList && listItems.length > 0) {
+          elements.push(
+            <ul key={`list-${lineIndex}`} className="list-disc pl-6 mb-4 space-y-1">
+              {listItems.map((item, i) => (
+                <li key={i} className="text-gray-700">{item}</li>
+              ))}
+            </ul>
+          )
+          listItems = []
+          inList = false
+        }
+        elements.push(
+          <p key={`p-${lineIndex}`} className="mb-3 text-gray-700 leading-relaxed">
+            {applyHighlights(trimmedLine, lineIndex, highlights, selectedHighlight, onHighlightClick)}
+          </p>
+        )
+      }
+    })
+
+    // Handle remaining list items
+    if (inList && listItems.length > 0) {
+      elements.push(
+        <ul key="list-final" className="list-disc pl-6 mb-4 space-y-1">
+          {listItems.map((item, i) => (
+            <li key={i} className="text-gray-700">{item}</li>
+          ))}
+        </ul>
+      )
+    }
+
+    return elements
+  }
+
+  // Apply highlights to text
+  const applyHighlights = (
+    text: string, 
+    lineIndex: number, 
+    highlights: any[], 
+    selectedHighlight: number | null,
+    onHighlightClick: (index: number) => void
+  ) => {
+    // Check if this text contains any highlights
+    const relevantHighlights = highlights.filter((h, i) => 
+      text.includes(h.text)
+    )
+
+    if (relevantHighlights.length === 0) {
+      return text
+    }
+
+    // Apply highlights
+    let result = text
+    relevantHighlights.forEach((highlight, i) => {
+      const highlightIndex = highlights.indexOf(highlight)
+      const riskStyles = getRiskStyles(highlight.severity)
+      const isSelected = selectedHighlight === highlightIndex
+
+      const highlightedSpan = `<span 
+        id="highlight-${highlightIndex}"
+        class="cursor-pointer px-1 py-0.5 rounded transition-all ${
+          isSelected 
+            ? 'bg-indigo-200 ring-2 ring-indigo-500' 
+            : highlight.severity === 'high' 
+              ? 'bg-red-100 hover:bg-red-200' 
+              : highlight.severity === 'medium'
+                ? 'bg-amber-100 hover:bg-amber-200'
+                : 'bg-green-100 hover:bg-green-200'
+        }"
+        onclick="window.handleHighlightClick && window.handleHighlightClick(${highlightIndex})"
+      >${highlight.text}</span>`
+
+      result = result.replace(highlight.text, highlightedSpan)
+    })
+
+    return <span dangerouslySetInnerHTML={{ __html: result }} />
+  }
+
+  // Set up global click handler
+  useEffect(() => {
+    ;(window as any).handleHighlightClick = onHighlightClick
+    return () => {
+      delete (window as any).handleHighlightClick
+    }
+  }, [onHighlightClick])
+
+  return <>{renderContent()}</>
 }

@@ -17,6 +17,7 @@ export interface Database {
           subscription_tier: string
           subscription_status: string
           analyses_used_this_month: number
+          lifetime_documents_created: number
           created_at: string
           updated_at: string
         }
@@ -27,6 +28,7 @@ export interface Database {
           subscription_tier?: string
           subscription_status?: string
           analyses_used_this_month?: number
+          lifetime_documents_created?: number
           created_at?: string
           updated_at?: string
         }
@@ -37,6 +39,7 @@ export interface Database {
           subscription_tier?: string
           subscription_status?: string
           analyses_used_this_month?: number
+          lifetime_documents_created?: number
           created_at?: string
           updated_at?: string
         }

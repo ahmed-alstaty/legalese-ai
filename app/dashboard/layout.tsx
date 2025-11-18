@@ -103,23 +103,17 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <Sidebar isCollapsed={isCollapsed} onToggle={toggleSidebar} />
-        
-        {/* Main content */}
-        <main className={`
-          flex-1 transition-all duration-300 ease-in-out
-          ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'}
-          ml-0
-        `}>
-          <div className="p-6 lg:p-8">
-            <div className="max-w-7xl mx-auto">
-              {children}
-            </div>
+    <div className="h-screen bg-gray-50 flex">
+      <Sidebar isCollapsed={isCollapsed} onToggle={toggleSidebar} />
+      
+      {/* Main content - scrollable */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            {children}
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   )
 }

@@ -1,0 +1,21 @@
+{
+  "name": "Legalese AI",
+  "short_name": "Legalese",
+  "description": "AI-powered legal document analysis",
+  "icons": [
+    {
+      "src": "/legalese-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/legalese-logo-hires.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#4f46e5",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/"
+}

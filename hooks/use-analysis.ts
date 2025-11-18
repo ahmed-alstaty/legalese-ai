@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AnalysisResult, UserAnnotation } from '@/types/database'
 
-interface AnalysisData {
+export interface AnalysisData {
   id: string
   documentId: string
   document: {
@@ -12,6 +12,7 @@ interface AnalysisData {
     document_type: string
     created_at: string
   }
+  status?: string
   summary: string
   keyObligations: string[]
   riskAssessment: {
